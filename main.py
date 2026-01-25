@@ -8,7 +8,7 @@ st.title("Movie Recommendation System")
 @st.cache_resource
 def load_assets():
     df = pd.read_csv('data/processed/movies.csv')
-    similarity = joblib.load('models/similarity.joblib')
+    similarity = joblib.load('models/similarity_matrix.joblib')
     return df, similarity
 
 movies, similarity = load_assets()
