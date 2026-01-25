@@ -1,0 +1,20 @@
+# Git
+.git
+
+# Python environment
+.venv/
+__pycache__/
+*.pyc
+
+# Data and Models (Too large for Git)
+/data/
+*.pkl
+*.joblib
+*.csv
+
+# Credentials and local config
+.env
+.kaggle/
+.streamlit/config.toml
+
+Task.md
