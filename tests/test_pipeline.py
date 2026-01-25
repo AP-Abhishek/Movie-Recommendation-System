@@ -39,7 +39,7 @@ def test_model_generation():
     assert matrix.shape[0] == len(df)
 
 def test_recommendation_output():
-    df = pd.read_csv('data/processed/movies_list.csv')
+    df = pd.read_csv('data/processed/movies_with_index.csv')
     similarity = joblib.load('models/similarity_matrix.joblib')
 
     movie_title = 'Avatar'
