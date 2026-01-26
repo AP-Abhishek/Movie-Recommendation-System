@@ -1,18 +1,9 @@
-# Core numerical stack (LTS-grade)
 numpy
 pandas
 scipy
-
-# Machine Learning (LTS)
 scikit-learn
 joblib
-
-# Visualization (stable, widely supported)
 matplotlib
 seaborn
-
-# UI (stable Streamlit series)
 streamlit
-
-# Dataset access
 kaggle
