@@ -27,32 +27,43 @@ st.markdown(
         display: flex;
         align-items: center;
         justify-content: center;
-        flex-wrap: wrap; /* Allows wrapping on mobile */
+        flex-wrap: wrap;
         margin-top: -30px;
         margin-bottom: 20px;
         gap: 15px;
     }}
     
     .header-logo {{
-        width: 80px; /* Base size for desktop */
+        width: 80px;
         height: auto;
     }}
     
     .header-title {{
         text-align: center;
-        font-size: clamp(1.5rem, 5vw, 3rem); /* Responsively scales between 1.5rem and 3rem */
+        font-size: clamp(1.5rem, 5vw, 3rem);
         margin: 0;
     }}
 
-    /* Mobile adjustments */
     @media (max-width: 640px) {{
         .header-container {{
-            flex-direction: column; /* Stacks icon on top of text */
+            flex-direction: column;
             margin-top: 0px;
         }}
         .header-logo {{
             width: 60px;
         }}
+    }}
+    
+    [data-testid="stImage"] img {{
+        height: 400px;
+        object-fit: cover;
+        border-radius: 10px;
+    }}
+    
+    .movie-title {{
+        font-weight: bold;
+        text-align: center;
+        margin-top: 5px;
     }}
     </style>
 
@@ -64,9 +75,15 @@ st.markdown(
     unsafe_allow_html=True
 )
 
+st.markdown("""
+    <style>
+
+    </style>
+    """, unsafe_allow_html=True)
+
 @st.cache_resource
 def load_assets():
-    df = pd.read_csv('data/processed/movies.csv')
+    df = pd.read_csv('data/processed/final_movies.csv')
     similarity = joblib.load('models/similarity_matrix.joblib')
     return df, similarity
 
@@ -74,23 +91,28 @@ movies, similarity = load_assets()
 
 def get_recommendations(title):
     try:
-        index = movies[movies['title'] == title].index[0]
+        idx_list = movies[movies['title'] == title].index
+        if idx_list.empty: return []
+        
+        index = idx_list[0]
         distances = similarity[index]
         top_indices = sorted(list(enumerate(distances)), reverse=True, key=lambda x: x[1])[1:6]
+        return [movies.iloc[i[0]] for i in top_indices]
+    except Exception:
+        return []
 
-        return [movies.iloc[i[0]].title for i in top_indices]
-    except IndexError:
-        return ["Error: Movie not found or index mismatch."]
-
-selected_movie = st.selectbox(
-    "Type or select a movie from the dropdown",
-    movies['title'].values
-)
+selected_movie = st.selectbox("Type or select a movie", movies['title'].values)
 
 if st.button("Show Recommendations"):
-    recommendations = get_recommendations(selected_movie)
-
-    cols = st.columns(5)
-    for idx, col in enumerate(cols):
-        with col:
-            st.text(recommendations[idx])
+    recos = get_recommendations(selected_movie)
+    if recos:
+        cols = st.columns(5)
+        for idx, movie in enumerate(recos):
+            with cols[idx]:
+                path = movie['poster'] if pd.notna(movie['poster']) else "data/processed/not-found.png"
+                if not str(path).startswith('http') and not os.path.exists(str(path)):
+                    path = "data/processed/not-found.png"
+                st.image(path)
+                st.markdown(f"<div class='movie-title'>{movie['title']}</div>", unsafe_allow_html=True)
+    else:
+        st.error("No recommendations found.")
