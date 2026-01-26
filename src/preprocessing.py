@@ -38,7 +38,7 @@ def clean_data(df):
     df['overview'] = df['overview'].apply(lambda x: x.split())
     df['tags'] = df['overview'] + df['genres'] + df['keywords'] + df['cast'] + df['crew']
 
-    new_df = df[['movie_id', 'title', 'tags', 'genres']].copy()
+    new_df = df[['movie_id', 'title', 'tags']].copy()
     new_df.loc[:, 'tags'] = df['tags'].apply(lambda x: " ".join(x).lower())
 
     return new_df
