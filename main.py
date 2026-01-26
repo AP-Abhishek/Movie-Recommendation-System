@@ -18,8 +18,6 @@ def get_base64_image(image_path):
     with open(image_path, "rb") as img_file:
         return base64.b64encode(img_file.read()).decode()
 
-img_base64 = get_base64_image("src/favicon.png")
-
 st.markdown(
     f"""
     <style>
@@ -32,38 +30,44 @@ st.markdown(
         margin-bottom: 20px;
         gap: 15px;
     }}
-    
-    .header-logo {{
-        width: 80px;
-        height: auto;
-    }}
-    
-    .header-title {{
-        text-align: center;
-        font-size: clamp(1.5rem, 5vw, 3rem);
-        margin: 0;
+    .header-logo {{ width: 80px; height: auto; }}
+    .header-title {{ text-align: center; font-size: clamp(1.5rem, 5vw, 3rem); margin: 0; }}
+
+    .main-grid {{
+        display: flex;
+        flex-wrap: wrap;
+        gap: 20px;
+        justify-content: center;
+        width: 100%;
     }}
 
-    @media (max-width: 640px) {{
-        .header-container {{
-            flex-direction: column;
-            margin-top: 0px;
-        }}
-        .header-logo {{
-            width: 60px;
-        }}
+    .movie-card {{
+        flex: 0 1 calc(20% - 20px);
+        min-width: 200px;
+        text-align: center;
     }}
-    
-    [data-testid="stImage"] img {{
+
+    .movie-card img {{
+        width: 100%;
         height: 400px;
         object-fit: cover;
         border-radius: 10px;
     }}
-    
+
     .movie-title {{
         font-weight: bold;
-        text-align: center;
-        margin-top: 5px;
+        margin-top: 10px;
+        word-wrap: break-word;
+    }}
+
+    @media (max-width: 1000px) {{
+        .movie-card {{ flex: 0 1 calc(33.33% - 20px); }}
+    }}
+    @media (max-width: 700px) {{
+        .movie-card {{ flex: 0 1 calc(50% - 20px); }}
+    }}
+    @media (max-width: 450px) {{
+        .movie-card {{ flex: 0 1 100%; }}
     }}
     </style>
 
@@ -74,12 +78,6 @@ st.markdown(
     """,
     unsafe_allow_html=True
 )
-
-st.markdown("""
-    <style>
-
-    </style>
-    """, unsafe_allow_html=True)
 
 @st.cache_resource
 def load_assets():
@@ -93,7 +91,6 @@ def get_recommendations(title):
     try:
         idx_list = movies[movies['title'] == title].index
         if idx_list.empty: return []
-        
         index = idx_list[0]
         distances = similarity[index]
         top_indices = sorted(list(enumerate(distances)), reverse=True, key=lambda x: x[1])[1:6]
@@ -106,13 +103,22 @@ selected_movie = st.selectbox("Type or select a movie", movies['title'].values)
 if st.button("Show Recommendations"):
     recos = get_recommendations(selected_movie)
     if recos:
-        cols = st.columns(5)
-        for idx, movie in enumerate(recos):
-            with cols[idx]:
-                path = movie['poster'] if pd.notna(movie['poster']) else "data/processed/not-found.png"
-                if not str(path).startswith('http') and not os.path.exists(str(path)):
-                    path = "data/processed/not-found.png"
-                st.image(path)
-                st.markdown(f"<div class='movie-title'>{movie['title']}</div>", unsafe_allow_html=True)
+        html_content = '<div class="main-grid">'
+        for movie in recos:
+            path = movie['poster'] if pd.notna(movie['poster']) else "data/processed/not-found.png"
+            
+            if not str(path).startswith('http'):
+                if os.path.exists(str(path)):
+                    img_data = get_base64_image(path)
+                    src = f"data:image/png;base64,{img_data}"
+                else:
+                    src = f"data:image/png;base64,{get_base64_image('data/processed/not-found.png')}"
+            else:
+                src = path
+
+            html_content += f'<div class="movie-card"><img src="{src}"><div class="movie-title">{movie["title"]}</div></div>'
+        
+        html_content += '</div>'
+        st.markdown(html_content, unsafe_allow_html=True)
     else:
         st.error("No recommendations found.")
