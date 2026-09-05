@@ -2,7 +2,7 @@ import os
 import joblib
 import pandas as pd
 from src.preprocessing import clean_data
-from src.recommender import build_similarity_matrix
+from src.recommender import build_matrix
 
 def test_raw_files_exists():
     assert os.path.exists('data/raw/tmdb_5000_movies.csv')
@@ -19,27 +19,31 @@ def test_clean_data_output():
         'crew': ['[{"job": "Director", "name": "James Cameron"}]']
     })
 
-    processed = clean_data(dummy_data)
+    processed = clean_data(dummy_data, save_to_disk=False)
 
     assert 'tags' in processed.columns
     assert 'jamescameron' in processed['tags'].iloc[0]
     assert processed['tags'].iloc[0].islower()
 
+
 def test_processed_file_exists():
-    assert os.path.exists('data/processed/movies.csv')
+    if not os.path.exists('data/processed/final_movies.csv') or len(pd.read_csv('data/processed/final_movies.csv')) < 10:
+        clean_data()
+    assert os.path.exists('data/processed/final_movies.csv')
+
 
 def test_model_generation():
-    build_similarity_matrix()
+    build_matrix()
     assert os.path.exists('models/similarity_matrix.joblib')
 
     matrix = joblib.load('models/similarity_matrix.joblib')
-    df = pd.read_csv('data/processed/movies.csv')
+    df = pd.read_csv('data/processed/final_movies.csv')
 
     assert matrix.shape[0] == matrix.shape[1]
     assert matrix.shape[0] == len(df)
 
 def test_recommendation_output():
-    df = pd.read_csv('data/processed/movies_with_index.csv')
+    df = pd.read_csv('data/processed/final_movies.csv')
     similarity = joblib.load('models/similarity_matrix.joblib')
 
     movie_title = 'Avatar'
@@ -52,4 +56,4 @@ def test_recommendation_output():
     recommended_titles = [df.iloc[i[0]].title for i in movies_list]
 
     assert len(recommended_titles) == 5
-    assert isinstance(recommended_titles[0], str)
+    assert isinstance(recommended_titles[0], str)
