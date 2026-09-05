@@ -5,6 +5,11 @@ import base64
 import os
 from PIL import Image
 
+from src.preprocessing import clean_data
+from src.recommender import build_matrix
+
+
+
 favicon_path = "src/favicon.png"
 if os.path.exists(favicon_path):
     favicon = Image.open(favicon_path)
@@ -79,10 +84,20 @@ st.markdown(
     unsafe_allow_html=True
 )
 
+
 @st.cache_resource
 def load_assets():
-    df = pd.read_csv('data/processed/final_movies.csv')
-    similarity = joblib.load('models/similarity_matrix.joblib')
+    csv_path = 'data/processed/final_movies.csv'
+    matrix_path = 'models/similarity_matrix.joblib'
+    
+    if not os.path.exists(csv_path):
+        clean_data()
+    if not os.path.exists(matrix_path):
+        os.makedirs('models', exist_ok=True)
+        build_matrix()
+        
+    df = pd.read_csv(csv_path)
+    similarity = joblib.load(matrix_path)
     return df, similarity
 
 movies, similarity = load_assets()
